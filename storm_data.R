@@ -354,7 +354,36 @@ data$EVTYPE[grepl("CHILL",data$EVTYPE)&
 # Unlisted events down to 65 from 67....
 unique(data$EVTYPE[!(data$EVTYPE %in% events)])
 
+data$EVTYPE[grepl("FL.*D",data$EVTYPE)&
+                     grepl('FLASH',data$EVTYPE)] <- "FLASH FLOOD"
 
-unique(events[grepl('CHILL',events)])
+# Unlisted events down to 61 from 65....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("SURF",data$EVTYPE)] <- "HIGH SURF"
+
+
+
+data$EVTYPE[grepl("WINTER",data$EVTYPE)&
+                     !grepl('STORM',data$EVTYPE)] <- "WINTER WEATHER"
+
+# Unlisted events down to 55 from 57....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("BLIZZARD",data$EVTYPE)] <- "BLIZZARD"
+
+# Unlisted events down to 53 from 55....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[(grepl("WIN[^DG].+",data$EVTYPE)|
+                      grepl('COOL',data$EVTYPE)|
+                      grepl('FREEZING\\s[^F]',data$EVTYPE))&
+                     !grepl('STORM',data$EVTYPE)] <- "WINTER WEATHER"
+
+# Unlisted events down to 50 from 53....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+
+unique(events[grepl('WINTER',events)])
 
 unique(data[grepl("APACHE COUNTY",data$EVTYPE),c('EVTYPE','REMARKS')])
