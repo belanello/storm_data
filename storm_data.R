@@ -484,11 +484,26 @@ unique(data$EVTYPE[!(data$EVTYPE %in% events)])
 data$EVTYPE[grepl("GUSTNADO",data$EVTYPE)] <- "THUNDERSTORM WIND"
 
 # remove '?' EVTYPE since no information for weather
+data <- subset(data, EVTYPE!='?')
 
-dim(data[data$EVTYPE=="OTHER",''])
+# Unlisted events down to 1 from 3....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
 
-#===========================
-events[grepl('WIND',events)] 
+# for "OTHER" type, need to look up REMARKS 
+rownames(data[data$EVTYPE=='OTHER',])
+
+data["249470",'EVTYPE'] <- "AVALANCHE"
+data[c("296122","399112","435359"),'EVTYPE'] <- "DUST DEVIL"
+data[c("298603","298604","298605","298606","298607","298608","298609",
+       "298610", "298611", "298612", "298613", "298614", "298615",
+       "298616", "298617", "298618","298619", "298620", "298621",
+       "298622" ,"298623", "298624", "298625", "298626", "298627",
+       "298628", "298629", "298630", "298631", "298632"),'EVTYPE'] <- "HEAVY RAIN"
+
+# Unlisted events down to 0 from 1....!!!!
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+
 
 
 stormData[stormData$EVTYPE=="?",]
