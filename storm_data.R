@@ -504,8 +504,54 @@ data[c("298603","298604","298605","298606","298607","298608","298609",
 unique(data$EVTYPE[!(data$EVTYPE %in% events)])
 
 
+#==========================================================
+# calculate again total damage before proceed to do clean up
+
+healthDmgSumFinal <- data %>% 
+  group_by(EVTYPE) %>%
+  summarize(fatalitiesSum=sum(FATALITIES),injuriesSum=sum(INJURIES)) %>%
+  mutate(total=fatalitiesSum+injuriesSum) %>%
+  arrange(desc(total))
+
+healthDmgSumFinal
 
 
-stormData[stormData$EVTYPE=="?",]
-rownames(data[data$EVTYPE=="?",])
+economicDmgSumFinal <- data %>%
+  group_by(EVTYPE) %>%
+  summarize(cropSum=sum(totCropDmg),propSum=sum(totPropDmg)) %>%
+  mutate(total=cropSum+propSum) %>%
+  arrange(desc(total))
+
+economicDmgSumFinal
+
+#==================================================================
+# Data
+# Storm Data records are from 1950 to 2011. There are 48 official categories
+# of events but from 1950 to 1992, only 1 - 3 events were recorded each year. 
+# (See appendix 1).Thus we subset the data from 1993 and compare damages for each event.
+
+#=================================================================
+#APPENDIX 1
+
+library(ggplot2)
+
+grouped <- data %>%
+  mutate(EVTYPE=factor(EVTYPE),YEAR=factor(year(BGN_DATE))) %>%
+  group_by(YEAR) 
+
+
+countByYear <- summarize(grouped, 'NUMBER OF RECORDED EVENTS'=length(unique(EVTYPE)))
+
+#==============================================================================
+
+# Data reduced to 227180 from 254556
+dt <- data %>%
+  mutate(YEAR=year(BGN_DATE)) %>%
+  filter(YEAR >= '1993')
+unique(dt$YEAR)
+dim(dt)
+
+names(data)
+
+
 
