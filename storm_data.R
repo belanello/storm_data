@@ -383,7 +383,114 @@ data$EVTYPE[(grepl("WIN[^DG].+",data$EVTYPE)|
 # Unlisted events down to 50 from 53....
 unique(data$EVTYPE[!(data$EVTYPE %in% events)])
 
+data$EVTYPE[grepl("HEAVY\\s[PM]",data$EVTYPE)|
+                     grepl("EXCESSIVE WETNESS",data$EVTYPE)|
+                     grepl("PRECIP",data$EVTYPE)] <- "HEAVY RAIN"
 
-unique(events[grepl('WINTER',events)])
 
-unique(data[grepl("APACHE COUNTY",data$EVTYPE),c('EVTYPE','REMARKS')])
+# Unlisted events down to 45 from 50....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("^[^MHST].+WIN[DS]$",data$EVTYPE)|
+                     grepl('FORCE',data$EVTYPE)] <- "STRONG WIND"
+
+# Unlisted events down to 42 from 45....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("URBAN",data$EVTYPE)] <- "FLOOD"
+
+# Unlisted events down to 38 from 42....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("MICROBURST",data$EVTYPE)] <- "STRONG WIND"
+
+# Unlisted events down to 34 from 38....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+data$EVTYPE[grepl("COASTAL.+[N]$",data$EVTYPE)] <- "COASTAL FLOOD"
+
+# Unlisted events down to 32 from 34....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("HEAT WAVE",data$EVTYPE)|
+                     grepl("RECORD HEAT",data$EVTYPE)|
+                     grepl("WARM",data$EVTYPE)] <- "HEAT"
+
+# Unlisted events down to 28 from 32....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("WINTER STORMS",data$EVTYPE)] <- "WINTER STORM" 
+data$EVTYPE[grepl("STRONG WINDS",data$EVTYPE)] <- "STRONG WIND"
+data$EVTYPE[grepl("RIP CURRENTS",data$EVTYPE)] <- "RIP CURRENT"
+data$EVTYPE[grepl("WATERSPOUT-",data$EVTYPE)] <- "WATERSPOUT"
+
+
+# Unlisted events down to 24 from 28....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("TSTMW",data$EVTYPE)|
+                     grepl("THUNDERSTROM WIND",data$EVTYPE)] <- "THUNDERSTORM WIND"
+
+
+# Unlisted events down to 22 from 24....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("STORM SURGE",data$EVTYPE)|
+              grepl("COASTAL SURGE",data$EVTYPE)] <- "STORM SURGE/TIDE"
+
+# Unlisted events down to 20 from 22....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("LIGNTNING",data$EVTYPE)|
+              grepl("LIGHTING",data$EVTYPE)] <- "LIGHTNING"
+
+# Unlisted events down to 18 from 20....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("HEAVY SWELLS",data$EVTYPE)|
+                     grepl("ROUGH SEAS",data$EVTYPE)] <- "HIGH SURF"
+
+# Unlisted events down to 16 from 18....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("NON-SEVERE WIND DAMAGE",data$EVTYPE)|
+                     grepl("BLOWING DUST",data$EVTYPE)] <- "STRONG WIND" 
+data$EVTYPE[grepl("MARINE TSTM WIND",data$EVTYPE)] <- "MARINE THUNDERSTORM WIND"
+
+# Unlisted events down to 13 from 16....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("LANDSPOUT",data$EVTYPE)] <- "TORNADO"
+data$EVTYPE[grepl("DOWNBURST",data$EVTYPE)] <- "STRONG WIND"
+data$EVTYPE[grepl("COASTAL STORM",data$EVTYPE)] <- "MARINE THUNDERSTORM WIND"
+data$EVTYPE[grepl("ASTRONOMICAL HIGH TIDE",data$EVTYPE)] <- "ASTRONOMICAL LOW TIDE"
+data$EVTYPE[grepl("BEACH EROSION",data$EVTYPE)] <- "DEBRIS FLOW"
+
+# Unlisted events down to 8 from 13....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("SLEET/ICE STORM",data$EVTYPE)] <- "SLEET"
+data$EVTYPE[grepl("LAKE FLOOD",data$EVTYPE)] <- "LAKESHORE FLOOD"
+data$EVTYPE[grepl("LANDSLUMP",data$EVTYPE)] <- "DEBRIS FLOW"
+
+# Unlisted events down to 5 from 8....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("MARINE ACCIDENT",data$EVTYPE)] <- "HIGH SURF"
+data$EVTYPE[grepl("DAM BREAK",data$EVTYPE)] <- "HEAVY RAIN"
+
+# Unlisted events down to 3 from 5....
+unique(data$EVTYPE[!(data$EVTYPE %in% events)])
+
+data$EVTYPE[grepl("GUSTNADO",data$EVTYPE)] <- "THUNDERSTORM WIND"
+
+# remove '?' EVTYPE since no information for weather
+
+dim(data[data$EVTYPE=="OTHER",''])
+
+#===========================
+events[grepl('WIND',events)] 
+
+
+stormData[stormData$EVTYPE=="?",]
+rownames(data[data$EVTYPE=="?",])
+
