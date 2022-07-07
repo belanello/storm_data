@@ -18,6 +18,7 @@ noDmgLogical <- (data$FATALITIES == 0)&
   (data$PROPDMG == 0)&
   (data$CROPDMG == 0)
 
+colSums(stormData[noDmgLogical,c("FATALITIES","INJURIES","PROPDMG","CROPDMG")])
 
 data <- subset(data, !(noDmgLogical))
 dim(data)

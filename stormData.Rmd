@@ -8,25 +8,57 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-##1.Overview  
+## 1.Overview  
+In this report, we analyze the NOAA Storm Database to answer the questions about the damages that severe weather events cause across the United States. Namely,
 
+1. Which types of severe weather events are most harmful with respect to population health?  
+2. Which types of severe weather events have the greatest economic consequences?  
 
-##2.Data Processing  
+In the section 2, we load and pre-process the data and in the section 3, we explore the Storm Data in details and answer the question according to our findings.
 
+## 2.Data Processing  
+
+First, we load the data.
 
 ```{r loadAndProcess, cache=TRUE,message=FALSE}
+
 url <- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2'
 download.file(url,'stormdata.csv')
-stormData <- read.csv('stormdata.csv')
-print('Dimension of Data: ')
-print(dim(stormData))
+data <- read.csv('stormdata.csv')
 
 ```
 
+The data has 902297 observations and 37 features.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r originalDimension, echo=TRUE}
+dim(data)
 ```
 
+The first 3 rows of data:
 
+```{r headData}
+head(data,3)
+```
 
+We only need the observation which caused fatalities/injuries or damages to crops/properties. Thus remove the observations where all of those records equal to zero to make further cleaning process easier.
+
+```{r removeZeroDmg}
+# remove data with ALL FATALITIES/INJURIES/CROPDMG/PROPDMG == 0 
+
+noDmgLogical <- (data$FATALITIES == 0)&
+  (data$INJURIES == 0)&
+  (data$PROPDMG == 0)&
+  (data$CROPDMG == 0)
+
+colSums(data[noDmgLogical,c("FATALITIES","INJURIES","PROPDMG","CROPDMG")])
+
+```
+
+Resulted in 254633 rows from 902297.
+
+```{r subsetData}
+
+data <- subset(data, !(noDmgLogical))
+dim(data)
+
+```
