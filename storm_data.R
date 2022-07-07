@@ -5,8 +5,6 @@ stormData <- read.csv('stormdata.csv')
 head(stormData)
 dim(stormData)
 
-file.size('stormdata.csv')
-object.size(stormData)
 
 #======================================================
 
@@ -571,11 +569,10 @@ g <- g + geom_point()
 #g + geom_smooth(method='lm')
 g + geom_line()
 
-filter(forPlot,YEAR=='1998')
+
 tmp <- data %>%
-  filter(EVTYPE=='FLOOD',
-         BGN_DATE == '1998-10-17') %>%
-  select(BGN_DATE,EVTYPE,STATE,FATALITIES,INJURIES, REMARKS)
+  filter(YEAR=='2011') %>%
+  select(EVTYPE,FATALITIES,INJURIES)
 
 tmp2 <- data %>%
   filter(EVTYPE=='FLOOD',YEAR=='1998') %>%
@@ -583,11 +580,10 @@ tmp2 <- data %>%
 
 tmp2/7385
 
-meanHealth <- data %>%
-  select(c(YEAR, EVTYPE,FATALITIES,INJURIES)) %>%
-  filter(EVTYPE %in% top5healthDmg) %>%
-  mutate(TOTAL=FATALITIES+INJURIES) %>%
-  group_by(EVTYPE) %>%
-  summarize(total=mean(TOTAL))
 
-meanHealth
+
+total2011 <- sum(forPlot$YEARLY[forPlot$YEAR=='2011'])
+tornado2011 <- forPlot$YEARLY[forPlot$YEAR=='2011'&forPlot$EVTYPE=='TORNADO']
+pctTornado2011 <- tornado2011/total2011 * 100
+pctTornado2011  
+

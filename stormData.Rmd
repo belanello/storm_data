@@ -1,0 +1,32 @@
+---
+title: "A Data Analysis of The Storm Data"
+author: "Ayako Nagao"
+date: "7/7/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##1.Overview  
+
+
+##2.Data Processing  
+
+
+```{r loadAndProcess, cache=TRUE,message=FALSE}
+url <- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2'
+download.file(url,'stormdata.csv')
+stormData <- read.csv('stormdata.csv')
+print('Dimension of Data: ')
+print(dim(stormData))
+
+```
+
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+
+
