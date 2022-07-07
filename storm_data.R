@@ -504,26 +504,6 @@ data[c("298603","298604","298605","298606","298607","298608","298609",
 unique(data$EVTYPE[!(data$EVTYPE %in% events)])
 
 
-#==========================================================
-# calculate again total damage before proceed to do clean up
-
-healthDmgSumFinal <- data %>% 
-  group_by(EVTYPE) %>%
-  summarize(fatalitiesSum=sum(FATALITIES),injuriesSum=sum(INJURIES)) %>%
-  mutate(total=fatalitiesSum+injuriesSum) %>%
-  arrange(desc(total))
-
-healthDmgSumFinal
-
-
-economicDmgSumFinal <- data %>%
-  group_by(EVTYPE) %>%
-  summarize(cropSum=sum(totCropDmg),propSum=sum(totPropDmg)) %>%
-  mutate(total=cropSum+propSum) %>%
-  arrange(desc(total))
-
-economicDmgSumFinal
-
 #==================================================================
 # Data
 # Storm Data records are from 1950 to 2011. There are 48 official categories
@@ -545,13 +525,69 @@ countByYear <- summarize(grouped, 'NUMBER OF RECORDED EVENTS'=length(unique(EVTY
 #==============================================================================
 
 # Data reduced to 227180 from 254556
-dt <- data %>%
+data <- data %>%
   mutate(YEAR=year(BGN_DATE)) %>%
   filter(YEAR >= '1993')
-unique(dt$YEAR)
-dim(dt)
+unique(data$YEAR)
+dim(data)
 
-names(data)
+#==============================================================================
+
+# calculate again total damage before proceed to do clean up
+
+healthDmgSumFinal <- data %>% 
+  group_by(EVTYPE) %>%
+  summarize(fatalitiesSum=sum(FATALITIES),injuriesSum=sum(INJURIES)) %>%
+  mutate(total=fatalitiesSum+injuriesSum) %>%
+  arrange(desc(total))
+
+healthDmgSumFinal
 
 
+economicDmgSumFinal <- data %>%
+  group_by(EVTYPE) %>%
+  summarize(cropSum=sum(totCropDmg),propSum=sum(totPropDmg)) %>%
+  mutate(total=cropSum+propSum) %>%
+  arrange(desc(total))
 
+economicDmgSumFinal
+
+#=============================================================================
+
+# Q1.Across the United States, which types of events are most harmful with respect
+# to population health?
+
+top5healthDmg <- healthDmgSumFinal$EVTYPE[1:5]
+
+forPlot <- data %>%
+  select(c(YEAR,EVTYPE,FATALITIES,INJURIES)) %>%
+  filter(EVTYPE %in% top5healthDmg) %>%
+  mutate(TOTAL=FATALITIES+INJURIES) %>%
+  group_by(YEAR,EVTYPE) %>%
+  summarize(YEARLY=sum(TOTAL))
+  
+g <- ggplot(forPlot,aes(x=YEAR,y=YEARLY,color=EVTYPE))
+g <- g + geom_point() 
+#g + geom_smooth(method='lm')
+g + geom_line()
+
+filter(forPlot,YEAR=='1998')
+tmp <- data %>%
+  filter(EVTYPE=='FLOOD',
+         BGN_DATE == '1998-10-17') %>%
+  select(BGN_DATE,EVTYPE,STATE,FATALITIES,INJURIES, REMARKS)
+
+tmp2 <- data %>%
+  filter(EVTYPE=='FLOOD',YEAR=='1998') %>%
+  summarize(total=sum(sum(FATALITIES),sum(INJURIES)))
+
+tmp2/7385
+
+meanHealth <- data %>%
+  select(c(YEAR, EVTYPE,FATALITIES,INJURIES)) %>%
+  filter(EVTYPE %in% top5healthDmg) %>%
+  mutate(TOTAL=FATALITIES+INJURIES) %>%
+  group_by(EVTYPE) %>%
+  summarize(total=mean(TOTAL))
+
+meanHealth
