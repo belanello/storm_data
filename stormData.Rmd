@@ -40,7 +40,35 @@ The first 3 rows of data:
 head(data,3)
 ```
 
-We only need the observation which caused fatalities/injuries or damages to crops/properties. Thus remove the observations where all of those records equal to zero to make further cleaning process easier.
+The data has 37 features, but we only need the features that are related to our analysis to answer to the questions.  
+After subsetting the features we need, features down to 15.
+
+``` {r subsetFeatures,message=FALSE}
+
+# Remove unnecessary columns
+library(dplyr)
+data <- select(data,c('STATE__',
+                            "STATE",
+                            "BGN_DATE",
+                            'EVTYPE',
+                            "LENGTH",
+                            "WIDTH",
+                            "F",
+                            "MAG",
+                            "FATALITIES",
+                            "INJURIES",
+                            "PROPDMG",
+                            "PROPDMGEXP",
+                            "CROPDMG",
+                            "CROPDMGEXP",
+                            "REMARKS"
+                            ))
+
+dim(data)
+
+```
+
+And also we only need the observation which caused fatalities/injuries or damages to crops/properties. Thus remove the observations where all of those records equal to zero to make further cleaning process easier.
 
 ```{r removeZeroDmg}
 # remove data with ALL FATALITIES/INJURIES/CROPDMG/PROPDMG == 0 
@@ -54,7 +82,7 @@ colSums(data[noDmgLogical,c("FATALITIES","INJURIES","PROPDMG","CROPDMG")])
 
 ```
 
-Resulted in 254633 rows from 902297.
+It resulted in 254633 rows from 902297.
 
 ```{r subsetData}
 
@@ -62,3 +90,64 @@ data <- subset(data, !(noDmgLogical))
 dim(data)
 
 ```
+
+Next, in order to get the amount of damage to the crops and properties, we need to calculate values in US dollars. The total amounts can be calculated by multiplying PROPDMG/CROPDMG columns by PROPDMGEXP/CROPDMGEXP columns respectively where multipliers are coded in alphabets(B for Billions,M for Millions and so on). Thus, after changing alphabets to multipliers in numbers, make new columns with calculated values.  
+I referenced the report [How To Handle Exponent Value of PROPDMGEXP and CROPDMGEXP](https://rstudio-pubs-static.s3.amazonaws.com/58957_37b6723ee52b455990e149edde45e5b6.html) for the clarification.  
+
+``` {r exponentsHandling, message=FALSE}
+
+## Difine exponent column handling function
+
+expFunc <- function(x){
+  if ((x=='B') | (x=='b')) {x <- 1e+9
+  }else if ((x=='M') | (x=='m')){x <- 1e+6
+  }else if((x=='K') | (x=='k')){x <- 1e+3
+  }else if((x=='H') | (x=='h')){x <- 1e+2
+  }else if(x %in% as.character(0:8)){x <- 1e+1
+  }else{x <- 1}
+}
+
+# Change alphabets to multiplier
+# for CROPDMGEXP
+data$CROPDMGEXP <- sapply(data$CROPDMGEXP,expFunc)
+
+# Make a new column for actual damage
+data <- mutate(data, totCropDmg=CROPDMG * CROPDMGEXP)
+
+# Repeat the same process for PROPDMGEXP
+# for PROPDMGEXP
+data$PROPDMGEXP <- sapply(data$PROPDMGEXP, expFunc)
+data <- mutate(data, totPropDmg=PROPDMG*PROPDMGEXP)
+
+
+```
+
+
+Now, the most important task in this data preprocessing phase is to organize the EVTYPE(event types) column. The official event types are 48. But if we count all unique values in this column, they are 488 at this point. It is due to the mistakes in spelling or being coded with own words. In order to compare all 48 event types, we have to assign incorrect event types to the official ones, meaning reduce 488 categories to 48. The approach I took was,  
+  
+1. Change all values to upper cases.(It erase the difference between upper cases and lower cases.)
+2. Load the official event type categories, (It copied from the documentation in PDF file.) and change them also in upper cases.  
+3. Check the event types which do not match with the official event types.  
+4. Then deal with them case by cases. if it was not sure which categories the values are pointing, read REMARKS or do web search.  
+
+```{r cleanUp1}
+
+# EVTYPE has 488 unique values
+before <- length(unique(data$EVTYPE))
+
+# change all to upper case then 447 EVTYPE
+
+data$EVTYPE <- toupper(data$EVTYPE)
+after <- length(unique(data$EVTYPE))
+
+print(cat(before,'down to ',after))
+
+```
+
+
+
+
+
+
+
+
