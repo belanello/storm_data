@@ -114,9 +114,9 @@ data <- mutate(data, totPropDmg=PROPDMG*PROPDMGEXP)
 Now, the most important task in this data preprocessing phase is to organize the EVTYPE(event types) column. The official event types are 48. But if we count all unique values in this column, they are 488 at this point. It is due to the mistakes in spelling or being coded with own words. In order to compare all 48 event types, we have to assign incorrect event types to the official ones, meaning reduce 488 categories to 48. The approach I took was,  
   
 1. Change all values to upper cases.(It erase the difference between upper cases and lower cases.)
-2. Load the official event type categories, (It copied from the documentation in PDF file.) and change them also in upper cases.  
+2. Load the official event type categories, (It was copied from the documentation in PDF file.) and change them also in upper cases.  
 3. List the event types which do not match with the official event types.  
-4. Then deal with them case by cases. For typos, check the pattern and use the grepl function to correct them together, if it was not sure which categories the values are pointing, read REMARKS and decide which events they belong to.  
+4. Then deal with them case by cases. For typos, check the pattern and use the grepl function to correct them together, if it was not sure which categories the values are pointing, read REMARKS and decide which events they possibly belong to.  
 
 ```{r cleanUp1}
 
@@ -150,76 +150,34 @@ Make a list of events which are not included in above list.
 
 notInListEvents <- unique(data[!(data$EVTYPE %in% events),'EVTYPE'])
 notInListEventsCounts <- length(notInListEvents)
-
+head(notInListEvents)
 ```
-In total, `r notInListEventsCounts` events are unlisted.
+In total, `r notInListEventsCounts` events are unlisted.  
+Below code will assign the unlisted events to the official event lists.
 
 ```{r cleanUp4}
 
 data$EVTYPE[grepl("^\\s*TSTM WIND",data$EVTYPE)] <- "THUNDERSTORM WIND"
-
 data$EVTYPE[grepl("^HURRICANE",data$EVTYPE)] <- "HURRICANE (TYPHOON)"  
-
 data$EVTYPE[grepl("^THUNDERSTORM",data$EVTYPE)] <- "THUNDERSTORM WIND"
-
-# Unlisted events down to 284 from 321....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("FLASH FLOOD",data$EVTYPE)] <- "FLASH FLOOD"
-
-# Unlisted events down to 271 from 284....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("TORNDAO",data$EVTYPE)|
               grepl('TORNADO',data$EVTYPE)] <- "TORNADO"
-
-# Unlisted events down to 261 from 271....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("^HIGH WIND",data$EVTYPE)] <- "HIGH WIND" 
-
-# Unlisted events down to 247 from 261....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("^WIND",data$EVTYPE)|
               grepl("^HIGH$",data$EVTYPE)] <- "HIGH WIND"
-
-# Unlisted events down to 242 from 247....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("^HEAVY RAIN",data$EVTYPE)] <- "HEAVY RAIN"
-
-# Unlisted events down to 234 from 242....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
 data$EVTYPE[grepl("LIGHTNING",data$EVTYPE)] <- "LIGHTNING"
-
-# Unlisted events down to 229 from 234....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("COLD",data$EVTYPE)&
                      !grepl("EXTREME",data$EVTYPE)&
                      !grepl('SNOW',data$EVTYPE)] <- "COLD/WIND CHILL"
-
-# Unlisted events down to 223 from 229....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("^FLOOD",data$EVTYPE)&
          !grepl("FLASH",data$EVTYPE)] <- "FLOOD"
-
-# Unlisted events down to 218 from 223....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("EXTREME COLD",data$EVTYPE)|
               grepl("HYPOTHERMIA" ,data$EVTYPE)|
               grepl("LOW TEMPERATURE",data$EVTYPE)] <- "EXTREME COLD/WIND CHILL"
-
-# Unlisted events down to 217 from 218....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("FREEZE",data$EVTYPE)] <- "FROST/FREEZE"
 
-# Unlisted events down to 212 from 217....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
 # Flood has different categories so do Not include other flood categories
 data$EVTYPE[grepl("FLOOD",data$EVTYPE)&
                    !grepl("FLASH",data$EVTYPE)&
@@ -228,242 +186,81 @@ data$EVTYPE[grepl("FLOOD",data$EVTYPE)&
                      !grepl("COASTAL",data$EVTYPE)&
                      !grepl("LAKE",data$EVTYPE)] <-"FLOOD"
 
-# Unlisted events down to 194 from 212....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("MARINE MISHAP",data$EVTYPE)] <- "MARINE HIGH WIND"
-
-# Unlisted events down to 193 from 194....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
-data$EVTYPE[(grepl("^HIGH",data$EVTYPE)&
-                     !grepl('WIND',data$EVTYPE)&
-               !grepl("^HIGH$",data$EVTYPE))|
+data$EVTYPE[(grepl("^HIGH",data$EVTYPE)& !grepl('WIND',data$EVTYPE)&!grepl("^HIGH$",data$EVTYPE))|
               grepl("HEAVY SEAS",data$EVTYPE)] <- "HIGH SURF"
 
-# Unlisted events down to 189 from 193....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("SEVERE TURBULENCE",data$EVTYPE)] <- "THUNDERSTORM WIND"
-
-# Unlisted events down to 188 from 189....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("SNOW",data$EVTYPE)&
                      !(grepl('LAKE',data$EVTYPE))] <- "HEAVY SNOW" 
-
-# Unlisted events down to 148 from 188....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("APACHE COUNTY",data$EVTYPE)] <- "THUNDERSTORM WIND"
-
-# Unlisted events down to 147 from 148....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[(grepl("TUNDERSTORM",data$EVTYPE)|
                   grepl("^TH.+M",data$EVTYPE)|
                   grepl("SEVERE TH.+M",data$EVTYPE))&
                 !grepl("MARINE THUNDERSTORM WIND",data$EVTYPE)] <- "THUNDERSTORM WIND"
-
-# Unlisted events down to 138 from 147....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("TYPHOON",data$EVTYPE)] <- "HURRICANE (TYPHOON)"
-
-# Unlisted events down to 137 from 138....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("GUSTY",data$EVTYPE)] <- "STRONG WIND"
-
-# Unlisted events down to 132 from 137....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("LAKE.+SNOW",data$EVTYPE)] <- "LAKE-EFFECT SNOW"
-
-# Unlisted events down to 130 from 132....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("HAIL",data$EVTYPE)&
                      !grepl('MARINE',data$EVTYPE)] <- "HAIL" 
-
-# Unlisted events down to 116 from 130....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("SLIDE",data$EVTYPE)] <- "DEBRIS FLOW"
-
-# Unlisted events down to 109 from 116....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("TROPICAL",data$EVTYPE)&
                      !grepl('DEPRESSION',data$EVTYPE)] <- "TROPICAL STORM"
-
-# Unlisted events down to 105 from 109....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("RAIN",data$EVTYPE)] <- "HEAVY RAIN"
-
-# Unlisted events down to 97 from 105....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("FOG",data$EVTYPE)&
               !grepl('FREEZING',data$EVTYPE)] <- "DENSE FOG"
-
-# Unlisted events down to 96 from 97....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("COASTAL FLOODING",data$EVTYPE)|
                      grepl('COASTAL FLOODING/EROSION',data$EVTYPE)] <- "COASTAL FLOOD"
-
-# Unlisted events down to 93 from 96....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("HIGH.+WINDS$",data$EVTYPE)] <- "HIGH WIND"
-
-# Unlisted events down to 90 from 93....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("FIRE",data$EVTYPE)] <- "WILDFIRE"
-
-# Unlisted events down to 83 from 90....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("ICE",data$EVTYPE)&
                      !grepl("STORM",data$EVTYPE)] <- "FROST/FREEZE"
-
-# Unlisted events down to 76 from 83....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("FROST",data$EVTYPE)|
                       grepl("GLAZE",data$EVTYPE)|
                       grepl("ICY ROADS",data$EVTYPE)|
                       grepl("EARLY FROST",data$EVTYPE)] <- "FROST/FREEZE"
-
-# Unlisted events down to 72 from 76....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("DROUGHT",data$EVTYPE)] <- "DROUGHT"
-
-# Unlisted events down to 69 from 72....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[(grepl("HEAT",data$EVTYPE)&
                      grepl('EX',data$EVTYPE))|
               grepl("HYPERTHERMIA/EXPOSURE",data$EVTYPE)] <- "EXCESSIVE HEAT"
-
-# Unlisted events down to 67 from 69....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("CHILL",data$EVTYPE)&
                      grepl('EX',data$EVTYPE)] <- "EXTREME COLD/WIND CHILL"
-
-# Unlisted events down to 65 from 67....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("FLOOD",data$EVTYPE)&
                      grepl('FLASH',data$EVTYPE)] <- "FLASH FLOOD"
-
-# Unlisted events down to 61 from 65....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("SURF",data$EVTYPE)|
               grepl("ROGUE WAVE",data$EVTYPE)] <- "HIGH SURF"
-
-
-
 data$EVTYPE[grepl("WINTER",data$EVTYPE)&
                      !grepl('STORM',data$EVTYPE)] <- "WINTER WEATHER"
-
-# Unlisted events down to 55 from 57....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("BLIZZARD",data$EVTYPE)] <- "BLIZZARD"
-
-# Unlisted events down to 53 from 55....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[(grepl("WIN[^DG].+",data$EVTYPE)|
                       grepl('COOL',data$EVTYPE)|
                       grepl('FREEZING\\s[^F]',data$EVTYPE))&
                      !grepl('STORM',data$EVTYPE)] <- "WINTER WEATHER"
-
-# Unlisted events down to 50 from 53....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("HEAVY\\s[PMS][^NUEW]'",data$EVTYPE)|
                      grepl("EXCESSIVE WETNESS",data$EVTYPE)|
                      grepl("PRECIP",data$EVTYPE)] <- "HEAVY RAIN"
-
-
-# Unlisted events down to 45 from 50....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("^[^MHST].+WIN[DS]$",data$EVTYPE)|
                      grepl('FORCE',data$EVTYPE)|
               grepl("DRY MIRCOBURST WINDS",data$EVTYPE)] <- "STRONG WIND"
-
-# Unlisted events down to 42 from 45....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("URBAN",data$EVTYPE)] <- "FLOOD"
-
-# Unlisted events down to 38 from 42....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("MICROBURST",data$EVTYPE)] <- "STRONG WIND"
-
-# Unlisted events down to 34 from 38....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
 data$EVTYPE[grepl("COASTAL.+[N]$",data$EVTYPE)] <- "COASTAL FLOOD"
-
-# Unlisted events down to 32 from 34....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("HEAT WAVE",data$EVTYPE)|
                      grepl("RECORD HEAT",data$EVTYPE)] <- "EXCESSIVE HEAT"
 data$EVTYPE[grepl("WARM",data$EVTYPE)] <- "HEAT"
-
-# Unlisted events down to 28 from 32....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("WINTER STORMS",data$EVTYPE)] <- "WINTER STORM" 
 data$EVTYPE[grepl("STRONG WINDS",data$EVTYPE)] <- "STRONG WIND"
 data$EVTYPE[grepl("RIP CURRENTS",data$EVTYPE)] <- "RIP CURRENT"
 data$EVTYPE[grepl("WATERSPOUT-",data$EVTYPE)] <- "WATERSPOUT"
-
-
-# Unlisted events down to 24 from 28....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("TSTMW",data$EVTYPE)] <- "THUNDERSTORM WIND"
-
-
-# Unlisted events down to 22 from 24....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("STORM SURGE",data$EVTYPE)|
               grepl("COASTAL SURGE",data$EVTYPE)] <- "STORM SURGE/TIDE"
-
-# Unlisted events down to 20 from 22....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("LIG.+G",data$EVTYPE)] <- "LIGHTNING"
-
-# Unlisted events down to 18 from 20....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("HEAVY SWELLS",data$EVTYPE)|
                      grepl("ROUGH SEAS",data$EVTYPE)] <- "HIGH SURF"
-
-# Unlisted events down to 16 from 18....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("NON-SEVERE WIND DAMAGE",data$EVTYPE)|
                      grepl("BLOWING DUST",data$EVTYPE)] <- "STRONG WIND" 
 data$EVTYPE[grepl("MARINE TSTM WIND",data$EVTYPE)] <- "MARINE THUNDERSTORM WIND"
-
-# Unlisted events down to 13 from 16....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("LANDSPOUT",data$EVTYPE)] <- "TORNADO"
 data$EVTYPE[grepl("DOWNBURST",data$EVTYPE)] <- "STRONG WIND"
 data$EVTYPE[grepl("COASTAL STORM",data$EVTYPE)] <- "MARINE THUNDERSTORM WIND"
@@ -475,35 +272,22 @@ data$EVTYPE[grepl("AVALANCE",data$EVTYPE)] <- "AVALANCHE"
 data$EVTYPE[grepl("HEAVY MIX",data$EVTYPE)] <- "HEAVY SNOW"
 data$EVTYPE[grepl("COASTALSTORM",data$EVTYPE)|
               grepl("HEAVY SHOWER",data$EVTYPE)] <- "HEAVY RAIN"
-
-# Unlisted events down to 8 from 13....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("SLEET/ICE STORM",data$EVTYPE)] <- "SLEET"
 data$EVTYPE[grepl("LAKE FLOOD",data$EVTYPE)] <- "LAKESHORE FLOOD"
 data$EVTYPE[grepl("LANDSLUMP",data$EVTYPE)] <- "DEBRIS FLOW"
-
-# Unlisted events down to 5 from 8....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("MARINE ACCIDENT",data$EVTYPE)] <- "HIGH SURF"
 data$EVTYPE[grepl("DAM BREAK",data$EVTYPE)] <- "HEAVY RAIN"
-
-# Unlisted events down to 3 from 5....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
 data$EVTYPE[grepl("GUSTNADO",data$EVTYPE)] <- "THUNDERSTORM WIND"
 data$EVTYPE[grepl("DUST DEVIL WATERSPOUT",data$EVTYPE)] <- "DUST DEVIL"
 
 # remove '?' EVTYPE since no information for weather
 data <- subset(data, EVTYPE!='?')
 
-# Unlisted events down to 1 from 3....
-unique(data$EVTYPE[!(data$EVTYPE %in% events)])
-
-# for "OTHER" type, need to look up REMARKS 
+# for "OTHER" type, need to look up REMARKS column 
+# get the row index and read all the REMARKS
 rownames(data[data$EVTYPE=='OTHER',])
 
+# there were only 3 possible event types. Assign them using row index.
 data["249470",'EVTYPE'] <- "AVALANCHE"
 data[c("296122","399112","435359"),'EVTYPE'] <- "DUST DEVIL"
 data[c("298603","298604","298605","298606","298607","298608","298609",
@@ -512,7 +296,7 @@ data[c("298603","298604","298605","298606","298607","298608","298609",
        "298622" ,"298623", "298624", "298625", "298626", "298627",
        "298628", "298629", "298630", "298631", "298632"),'EVTYPE'] <- "HEAVY RAIN"
 
-# Unlisted events down to 0 from 1....!!!!
+# Unlisted events down to 0....!!!!
 unique(data$EVTYPE[!(data$EVTYPE %in% events)])
 
 
