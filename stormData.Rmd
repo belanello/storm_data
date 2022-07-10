@@ -312,34 +312,28 @@ of events but from 1950 to 1992, only 1 - 3 events were recorded each year.
 library(lubridate)
 date <- gsub('/','-',data$BGN_DATE)
 date <- gsub(' 0:00:00','',date)
-date <- mdy(date)
-data$BGN_DATE <- date
+
+data <- data %>%
+  mutate(BGN_DATE=mdy(date),YEAR=year(BGN_DATE))
+
 
 grouped <- data %>%
-  mutate(EVTYPE=factor(EVTYPE),YEAR=factor(year(BGN_DATE))) %>%
+  mutate(EVTYPE=factor(EVTYPE),YEAR=factor(YEAR)) %>%
   group_by(YEAR) 
 
 
 before <- dim(data)[1]
-data <- data %>%
-  mutate(YEAR=year(BGN_DATE)) %>%
-  filter(YEAR >= '1993')
-
+data <- filter(data, YEAR >= '1993')
 after <- dim(data)[1]
 
 ```
 
 Now data has only records from 1993 to 2011. The number of records reduced to `r after` from `r before`.  
 
-```{r apdx1}
-# THIS GOES TO APPENDIX
-# This dataframe shows the number of the unique events each year
-countByYear <- summarize(grouped, 'NUMBER OF RECORDED EVENTS'=length(unique(EVTYPE)))
-countByYear
-```
+
 
 ## 3.Results
-Table.@ is a list of top 5 weather events which caused the most fatalities and injuries on US citizens from 1993 to 2011. (see full list for appendix @).Figure.** is the plot the total number of fatalities and injuries by year for each top 5 weather event.  
+Table.@ is a list of top 5 weather events which caused the highest fatalities and injuries on US citizens from 1993 to 2011. (see full list for appendix 1).  
 
 ```{r result1,message=FALSE}
 
@@ -349,7 +343,7 @@ healthDmgSum <- data %>%
   mutate(Total=Fatalities+Injuries) %>%
   arrange(desc(Total)) 
 Rank <- 1:5
-kbl(cbind(Rank,healthDmgSum[1:5,]), caption='Top 5 events Caused Most Fatalities/Injuries (Descending order of Total)',
+kbl(cbind(Rank,healthDmgSum[1:5,]), caption='Top 5 events Caused Highest  Fatalities/Injuries (Descending order of Total)',
              type='html')  %>% 
   kable_styling(latex_options = 'hold_position',full_width=F,position='left') %>%
   column_spec(2,bold=T)%>%
@@ -357,38 +351,47 @@ kbl(cbind(Rank,healthDmgSum[1:5,]), caption='Top 5 events Caused Most Fatalities
 
 ```
 
-
-```{r apdx2}
-#THIS GOES TO APPENDIX
-healthDmgSum
-
-```
+We grouped the data by year and events, and plotted the total number of fatalities and injuries in Figure.1. 
 
 ```{r plotHeath, message=FALSE}
 library(ggplot2)
 top5healthDmg <- healthDmgSum$EVTYPE[1:5]
 
-forPlot <- data %>%
+PlotHealth <- data %>%
   select(c(YEAR,EVTYPE,FATALITIES,INJURIES)) %>%
   filter(EVTYPE %in% top5healthDmg) %>%
   mutate(TOTAL=FATALITIES+INJURIES) %>%
   group_by(YEAR,EVTYPE) %>%
   summarize(YEARLY=sum(TOTAL))
   
-g <- ggplot(forPlot,aes(x=YEAR,y=YEARLY,color=EVTYPE))
+g <- ggplot(PlotHealth,aes(x=YEAR,y=YEARLY,color=EVTYPE))
 g <- g + geom_point() 
 g + geom_line()
 
 ```
+
+Let's look into the details for each event.  
   
-  
-1. TORNADO  
-TORNADO has the highest figure of fatalities and injuries in the records. From 1993, mostly keep the highest place, and 2011 was the one of the worst year, 88% of the total fatalities/injuries in this year were caused by TORNADO.  
+1.TORNADO  
 
-2. EXCESSIVE HEAT
+```{r parcentageTornado}
+# Calculate 2011 tornado percentage in total fatalities/injuries
+data2011 <- data %>%
+  filter(YEAR=='2011') %>%
+  mutate(total=FATALITIES + INJURIES) %>%
+  group_by(EVTYPE) %>%
+  summarize(S=sum(total))
+
+pct <- round(data2011$S[data2011$EVTYPE=='TORNADO'] / sum(data2011$S),2) * 100
+
+```
+ 
+TORNADO has the highest figure of fatalities and injuries in the records. From 1993, mostly keep the highest place, and 2011 was the one of the worst year, `r pct`% of the total fatalities/injuries in this year were caused by TORNADO.  
+
+2.EXCESSIVE HEAT
 
 
-3. FLOOD  
+3.FLOOD  
 
 In 1998, Oct 17-18 there was a flood event([Central Texas floods](https://en.wikipedia.org/wiki/October_1998_Central_Texas_floods)). The number of the fatalities/injuries in this year occupies nearly 84% of the those of flood events for 20 years, which means this high figure is due to one single event.
 4. 
@@ -405,11 +408,29 @@ economicDmgSum <- data %>%
 
 
 ```
+## Appendix
 
+1.The number of the unique events by years
 
+```{r apdx1}
+
+# This dataframe shows the number of the unique events each year
+countByYear <- summarize(grouped, 'NUMBER OF RECORDED EVENTS'=length(unique(EVTYPE)))
+kable(countByYear,type='html')
+```
+
+2.The Full list of total Fatalities/Injuries for each event.  
+
+```{r apdx2}
+
+kable(healthDmgSum,type='html')
+
+```
+
+3.The full list of total damages to the crops/properties for each event.
 ```{r apdx3}
-#THIS GOES TO APPENDIX
-economicDmgSum
+
+kable(economicDmgSum,type='html')
 
 ```
 
