@@ -9,14 +9,16 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 ## 1.Overview  
-In this report, we analyze the NOAA Storm Database to answer the questions about the damages that severe weather events cause across the United States. Namely,
+In this report, we analyze the NOAA Storm Database to answer the questions about the damages that severe weather events caused across the United States. Namely,
 
 1. Which types of severe weather events are most harmful with respect to population health?  
 2. Which types of severe weather events have the greatest economic consequences?  
 
-In the section 2, we load and pre-process the data and in the section 3, we explore the Storm Data in details and answer the question according to our findings.
+To answer these questions, We will find out which severe weather events are attributed to higher fatalities/injuries or larger damages to the crops/properties, so that readers can conduct further analyses and take appropriate prevention measures for those events.
 
 ## 2.Data Processing  
+
+In this section, we load the raw data, subset and alter some columns to make the data ready for analyses.
 
 First, we load the data.
 
@@ -25,14 +27,12 @@ First, we load the data.
 url <- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2'
 download.file(url,'stormdata.csv')
 data <- read.csv('stormdata.csv')
+nrows <- dim(data)[1]
+ncols <- dim(data)[2]
 
 ```
 
-The data has 902297 observations and 37 features.
-
-```{r originalDimension, echo=TRUE}
-dim(data)
-```
+The data has `r nrows` observations and `r ncols` features.
 
 The first 3 rows of data:
 
@@ -40,23 +40,17 @@ The first 3 rows of data:
 head(data,3)
 ```
 
-The data has 37 features, but we only need the features that are related to our analysis to answer to the questions.  
-After subsetting the features we need, features down to 15.
+Subset the columns we need,
 
 ``` {r subsetFeatures,message=FALSE}
 
 # Remove unnecessary columns
 library(dplyr)
-data <- select(data,c('STATE__',
-                            "STATE","BGN_DATE",'EVTYPE',"LENGTH","WIDTH",
-                            "F","MAG","FATALITIES","INJURIES","PROPDMG",
-                            "PROPDMGEXP","CROPDMG","CROPDMGEXP","REMARKS"
-                            ))
+data <- select(data,c('STATE__',"STATE","BGN_DATE",'EVTYPE',"LENGTH","WIDTH","F","MAG","FATALITIES","INJURIES","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP","REMARKS"))
 
-dim(data)
 ```
 
-And also we only need the observation which caused fatalities/injuries or damages to crops/properties. Thus remove the observations where all of those records equal to zero to make further cleaning process easier.
+Subset the observation we need. (we only need the observation which caused fatalities/injuries or damages to crops/properties. Thus remove the observations where all of those records equal to zero.)
 
 ```{r removeZeroDmg}
 # remove data with ALL FATALITIES/INJURIES/CROPDMG/PROPDMG == 0 
@@ -65,22 +59,19 @@ noDmgLogical <- (data$FATALITIES == 0)&
   (data$INJURIES == 0)&
   (data$PROPDMG == 0)&
   (data$CROPDMG == 0)
-
+# Check if above logic subset all-zero-observations
 colSums(data[noDmgLogical,c("FATALITIES","INJURIES","PROPDMG","CROPDMG")])
 
-```
-
-It resulted in 254633 rows from 902297.
-
-```{r subsetData}
-
+# Subset data opposite of above logic
 data <- subset(data, !(noDmgLogical))
-dim(data)
-
+nrows <- dim(data)[1]
+ncols <- dim(data)[2]
 ```
 
-Next, in order to get the amount of damage to the crops and properties, we need to calculate values in US dollars. The total amounts can be calculated by multiplying PROPDMG/CROPDMG columns by PROPDMGEXP/CROPDMGEXP columns respectively where multipliers are coded in alphabets(B for Billions,M for Millions and so on). Thus, after changing alphabets to multipliers in numbers, make new columns with calculated values.  
-I referenced the report [How To Handle Exponent Value of PROPDMGEXP and CROPDMGEXP](https://rstudio-pubs-static.s3.amazonaws.com/58957_37b6723ee52b455990e149edde45e5b6.html) for the clarification.  
+It resulted in `r nrows` observations and `r ncols` columns.  
+
+Next, in order to get the amount of damage to the crops and properties, we need to calculate actual values. The total amounts can be calculated by multiplying PROPDMG/CROPDMG columns by PROPDMGEXP/CROPDMGEXP columns respectively where multipliers are coded in alphabets(B for Billions,M for Millions and so on). Thus, after changing alphabets to multipliers in numbers, calculate values and make new columns.  
+(I referenced the report [How To Handle Exponent Value of PROPDMGEXP and CROPDMGEXP](https://rstudio-pubs-static.s3.amazonaws.com/58957_37b6723ee52b455990e149edde45e5b6.html) for the clarification.) 
 
 ``` {r exponentsHandling, message=FALSE}
 
@@ -103,36 +94,26 @@ data$CROPDMGEXP <- sapply(data$CROPDMGEXP,expFunc)
 data <- mutate(data, totCropDmg=CROPDMG * CROPDMGEXP)
 
 # Repeat the same process for PROPDMGEXP
-# for PROPDMGEXP
 data$PROPDMGEXP <- sapply(data$PROPDMGEXP, expFunc)
 data <- mutate(data, totPropDmg=PROPDMG*PROPDMGEXP)
-
 
 ```
 
 
-Now, the most important task in this data preprocessing phase is to organize the EVTYPE(event types) column. The official event types are 48. But if we count all unique values in this column, they are 488 at this point. It is due to the mistakes in spelling or being coded with own words. In order to compare all 48 event types, we have to assign incorrect event types to the official ones, meaning reduce 488 categories to 48. The approach I took was,  
-  
-1. Change all values to upper cases.(It erase the difference between upper cases and lower cases.)
-2. Load the official event type categories, (It was copied from the documentation in PDF file.) and change them also in upper cases.  
-3. List the event types which do not match with the official event types.  
-4. Then deal with them case by cases. For typos, check the pattern and use the grepl function to correct them together, if it was not sure which categories the values are pointing, read REMARKS and decide which events they possibly belong to.  
+Now, the most important task in this data preprocessing phase is to organize the EVTYPE(event types) column. The number of official event types are 48. But if we count all unique values in this column, they are 488 at this point. It is due to the mistakes in spelling or being coded with own words. In order to compare all 48 event types, we have to assign incorrect event types to the official ones, meaning reduce 488 categories to 48. 
 
+1. Change all values to upper cases.(It erase the difference between upper cases and lower cases.)
 ```{r cleanUp1}
 
-# EVTYPE has 488 unique values
 before <- length(unique(data$EVTYPE))
-
-# change all to upper case then 447 EVTYPE
-
 data$EVTYPE <- toupper(data$EVTYPE)
 after <- length(unique(data$EVTYPE))
 
 ```
 
-Now unique EVTYPE values are reduced to `r after` from `r before`.  
-Let's load official event types and compare them to the values in the EVTYPE column.
-
+Now after changed them to all upper cases, unique EVTYPE values are reduced to `r after` from `r before`.  
+  
+2. Load the official event type categories, (It was copied from the documentation in PDF file.) and change them also in upper cases.  
 ```{r cleanUp2,results='asis',message=FALSE}
 
 library(kableExtra)
@@ -144,7 +125,7 @@ kbl(matrix(events, nrow=16,dimnames =NULL), caption='Official Event Types',
 
 ```
 
-Make a list of events which are not included in above list.
+3. List the event types which do not match with the official event types.
 
 ```{r cleanUp3}
 
@@ -153,8 +134,9 @@ notInListEventsCounts <- length(notInListEvents)
 head(notInListEvents)
 ```
 In total, `r notInListEventsCounts` events are unlisted.  
-Below code will assign the unlisted events to the official event lists.
 
+4. Then deal with them case by cases. For typos, check the pattern and use the grepl function to correct them together, if it was not sure which categories the values are pointing, read REMARKS and decide which events they possibly belong to.  
+Below code will assign the unlisted events to the official event lists.  
 ```{r cleanUp4,cache=TRUE}
 
 data$EVTYPE[grepl("^\\s*TSTM WIND",data$EVTYPE)] <- "THUNDERSTORM WIND"
@@ -308,28 +290,29 @@ of events but from 1950 to 1992, only 1 - 3 events were recorded each year.
 
 ```{r subset1993onward, message=FALSE}
 
-# change BGN_DATE column to Date class
+# Change BGN_DATE column to Date class
 library(lubridate)
 date <- gsub('/','-',data$BGN_DATE)
 date <- gsub(' 0:00:00','',date)
-
-data <- data %>%
-  mutate(BGN_DATE=mdy(date),YEAR=year(BGN_DATE))
-
-
-grouped <- data %>%
-  mutate(EVTYPE=factor(EVTYPE),YEAR=factor(YEAR)) %>%
-  group_by(YEAR) 
-
+# Make a new column for YEAR
+data <- mutate(data, BGN_DATE=mdy(date),YEAR=year(BGN_DATE))
 
 before <- dim(data)[1]
+# filter the data only after 1993
 data <- filter(data, YEAR >= '1993')
 after <- dim(data)[1]
 
 ```
 
-Now data has only records from 1993 to 2011. The number of records reduced to `r after` from `r before`.  
+Now data has only records from 1993 to 2011. The number of records reduced to `r after` from `r before` .  
 
+And lastly, make total columns of damages to make an analysis easier.  
+```{r newColumn}
+# make new columns for total of health/economic damages
+data <- mutate(data, 
+               totFatInj=FATALITIES+INJURIES,totCropProp=totPropDmg+totCropDmg)
+
+```
 
 
 ## 3.Results
@@ -389,24 +372,21 @@ pct <- round(data2011$S[data2011$EVTYPE=='TORNADO'] / sum(data2011$S),2) * 100
 TORNADO has the highest figure of fatalities and injuries in the records. From 1993, mostly keep the highest place, and 2011 was the one of the worst year, `r pct`% of the total fatalities/injuries in this year were caused by TORNADO.  
 
 2.EXCESSIVE HEAT  
-```{r excessiveHeat}
-heatFatality <- data %>%
-  filter(EVTYPE=='EXCESSIVE HEAT') %>%
-  mutate(Total=FATALITIES+INJURIES) %>%
-  group_by(STATE) %>%
-  summarize(Total=sum(Total)) %>%
-  arrange(desc(Total))
-kable(heatFatality,type='html')
-
-```
-
-The EXCESSIVE HEAT has the highest fatality among all the events.
+The EXCESSIVE HEAT has the highest fatalities among all the events. 
 
 3.FLOOD  
 
-In 1998, Oct 17-18 there was a flood event([Central Texas floods](https://en.wikipedia.org/wiki/October_1998_Central_Texas_floods)). The number of the fatalities/injuries in this year occupies nearly 84% of the those of flood events for 20 years, which means this high figure is due to one single event.
-4. 
+```{r flood}
+
+
+```
+
+In 1998, Oct 17-18, there was a flood event([Central Texas floods](https://en.wikipedia.org/wiki/October_1998_Central_Texas_floods)). The number of the fatalities/injuries in this year occupies nearly 84% of the those of flood events for 20 years, which means this high figure is due to one single event.
+
+4.THUNDERSTORM WIND  
 5.LIGHTNING  
+
+THUNDERSTORM WIND and LIGHTNING have similar trend through the record.
 
 
 ```{r economyResult}
@@ -419,17 +399,28 @@ economicDmgSum <- data %>%
 
 
 ```
-## Appendix
+## References  
+
+[How To Handle Exponent Value of PROPDMGEXP and CROPDMGEXP](https://rstudio-pubs-static.s3.amazonaws.com/58957_37b6723ee52b455990e149edde45e5b6.html)  
+
+[United States Census Bureau]('https://www.census.gov/library/reference/code-lists/ansi.html')
+
+
+## Appendix  
 
 1.The number of the unique events by years
 
 ```{r apdx1}
-
+# Count unique EVTYPE each year 
+grouped <- data %>%
+  mutate(EVTYPE=factor(EVTYPE),YEAR=factor(YEAR)) %>%
+  group_by(YEAR) 
 # This dataframe shows the number of the unique events each year
 countByYear <- summarize(grouped, 'NUMBER OF RECORDED EVENTS'=length(unique(EVTYPE)))
 kable(countByYear,type='html')
 ```
-
+  
+  
 2.The Full list of total Fatalities/Injuries for each event.  
 
 ```{r apdx2}
@@ -437,7 +428,8 @@ kable(countByYear,type='html')
 kable(healthDmgSum,type='html')
 
 ```
-
+  
+  
 3.The full list of total damages to the crops/properties for each event.
 ```{r apdx3}
 
@@ -445,5 +437,4 @@ kable(economicDmgSum,type='html')
 
 ```
 
-## References
-['United States Census Bureau']('https://www.census.gov/library/reference/code-lists/ansi.html')
+
