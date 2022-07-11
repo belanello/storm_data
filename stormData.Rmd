@@ -333,7 +333,7 @@ Now data has only records from 1993 to 2011. The number of records reduced to `r
 
 
 ## 3.Results
-Table.@ is a list of top 5 weather events which caused the highest fatalities and injuries on US citizens from 1993 to 2011. (see full list for appendix 1).  
+Table.@ is a list of top 5 weather events which caused the highest fatalities and injuries on US citizens from 1993 to 2011. (see full list for appendix 2).  
 
 ```{r result1,message=FALSE}
 
@@ -388,8 +388,19 @@ pct <- round(data2011$S[data2011$EVTYPE=='TORNADO'] / sum(data2011$S),2) * 100
  
 TORNADO has the highest figure of fatalities and injuries in the records. From 1993, mostly keep the highest place, and 2011 was the one of the worst year, `r pct`% of the total fatalities/injuries in this year were caused by TORNADO.  
 
-2.EXCESSIVE HEAT
+2.EXCESSIVE HEAT  
+```{r excessiveHeat}
+heatFatality <- data %>%
+  filter(EVTYPE=='EXCESSIVE HEAT') %>%
+  mutate(Total=FATALITIES+INJURIES) %>%
+  group_by(STATE) %>%
+  summarize(Total=sum(Total)) %>%
+  arrange(desc(Total))
+kable(heatFatality,type='html')
 
+```
+
+The EXCESSIVE HEAT has the highest fatality among all the events.
 
 3.FLOOD  
 
@@ -434,4 +445,5 @@ kable(economicDmgSum,type='html')
 
 ```
 
-
+## References
+['United States Census Bureau']('https://www.census.gov/library/reference/code-lists/ansi.html')
