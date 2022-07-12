@@ -18,7 +18,8 @@ To answer these questions, We will find out which severe weather events are attr
 
 ## 2.Data Processing  
 
-In this section, we load the raw data, subset and alter some columns to make the data ready for analyses.
+In this section, we load the raw data, subset and alter some columns to make the data ready for analyses.  
+(*I set echo=TRUE for all the code for grading purpose. This section may be a little lengthy.)
 
 First, we load the data.
 
@@ -120,7 +121,7 @@ library(kableExtra)
 events <- read.table('events.txt',sep = '\n')
 events <- toupper(events$V1)
 # display official event list
-kbl(matrix(events, nrow=16,dimnames =NULL), caption='Official Event Types',
+kbl(matrix(events, nrow=16,dimnames =NULL), caption='Official Event Types (Table.1)',
              type='html')  %>% kable_styling(latex_options = 'hold_position',font_size=10)
 
 ```
@@ -298,6 +299,10 @@ date <- gsub(' 0:00:00','',date)
 data <- mutate(data, BGN_DATE=mdy(date),YEAR=year(BGN_DATE))
 
 before <- dim(data)[1]
+# Count unique EVTYPE each year (This code needed for appendix1)
+grouped <- data %>%
+  mutate(EVTYPE=factor(EVTYPE),YEAR=factor(YEAR)) %>%
+  group_by(YEAR) 
 # filter the data only after 1993
 data <- filter(data, YEAR >= '1993')
 after <- dim(data)[1]
@@ -316,17 +321,17 @@ data <- mutate(data,
 
 
 ## 3.Results
-Table.@ is a list of top 5 weather events which caused the highest fatalities and injuries on US citizens from 1993 to 2011. (see full list for appendix 2).  
+Table.2 is a list of top 5 weather events which caused the highest fatalities and injuries on US citizens from 1993 to 2011. (see full list for appendix 2).  
 
 ```{r result1,message=FALSE}
 
 healthDmgSum <- data %>% 
   group_by(EVTYPE) %>%
-  summarize(Fatalities=sum(FATALITIES),Injuries=sum(INJURIES)) %>%
-  mutate(Total=Fatalities+Injuries) %>%
+  summarize(Fatalities=sum(FATALITIES),Injuries=sum(INJURIES),Total=sum(totFatInj)) %>%
   arrange(desc(Total)) 
+
 Rank <- 1:5
-kbl(cbind(Rank,healthDmgSum[1:5,]), caption='Top 5 events Caused Highest  Fatalities/Injuries (Descending order of Total)',
+kbl(cbind(Rank,healthDmgSum[1:5,]), caption='Top 5 events Recorded Highest  Fatalities/Injurie(Descending order of Total) Table.2',
              type='html')  %>% 
   kable_styling(latex_options = 'hold_position',full_width=F,position='left') %>%
   column_spec(2,bold=T)%>%
@@ -353,9 +358,7 @@ g + geom_line()
 
 ```
 
-Let's look into the details for each event.  
-  
-1.TORNADO  
+### Findings for severe weather events wchich are most harmful to population health
 
 ```{r parcentageTornado}
 # Calculate 2011 tornado percentage in total fatalities/injuries
@@ -365,40 +368,78 @@ data2011 <- data %>%
   group_by(EVTYPE) %>%
   summarize(S=sum(total))
 
-pct <- round(data2011$S[data2011$EVTYPE=='TORNADO'] / sum(data2011$S),2) * 100
+pctTornado <- round(data2011$S[data2011$EVTYPE=='TORNADO'] / sum(data2011$S),2) * 100
+
+flood1998 <- filter(data, EVTYPE=='FLOOD' & YEAR=='1998') 
+flood <- filter(data,EVTYPE=='FLOOD') 
+
+pct1998 <- round(sum(flood1998$totFatInj) / sum(flood$totFatInj),2)*100
 
 ```
  
-TORNADO has the highest figure of fatalities and injuries in the records. From 1993, mostly keep the highest place, and 2011 was the one of the worst year, `r pct`% of the total fatalities/injuries in this year were caused by TORNADO.  
+* TORNADO has the highest figure of fatalities and injuries in the records. From 1993, mostly keep the highest place, and 2011 was the one of the worst year, `r pctTornado`% of the total fatalities/injuries in this year were caused by TORNADO.  
 
-2.EXCESSIVE HEAT  
-The EXCESSIVE HEAT has the highest fatalities among all the events. 
+* The EXCESSIVE HEAT has the highest fatalities among all the events. 
 
-3.FLOOD  
+*  The number of the fatalities/injuries by FLOOD were relatively low except 1998. The figure in this year occupies nearly `r pct1998`% of the total fatalities/injuries in the record.  
 
-```{r flood}
-
-
-```
-
-In 1998, Oct 17-18, there was a flood event([Central Texas floods](https://en.wikipedia.org/wiki/October_1998_Central_Texas_floods)). The number of the fatalities/injuries in this year occupies nearly 84% of the those of flood events for 20 years, which means this high figure is due to one single event.
-
-4.THUNDERSTORM WIND  
-5.LIGHTNING  
-
-THUNDERSTORM WIND and LIGHTNING have similar trend through the record.
+* THUNDERSTORM WIND and LIGHTNING have similar trend through the record.
 
 
 ```{r economyResult}
 economicDmgSum <- data %>%
   group_by(EVTYPE) %>%
-  summarize(cropSum=sum(totCropDmg),propSum=sum(totPropDmg)) %>%
-  mutate(total=cropSum+propSum) %>%
-  arrange(desc(total))
+  summarize(cropSum=sum(totCropDmg),propSum=sum(totPropDmg),Total=sum(totCropProp)) %>%
+  arrange(desc(Total))
 
-
+Rank <- 1:5
+kbl(cbind(Rank,economicDmgSum[1:5,]), caption='Table.3 Top 5 events Recorded Highest Damages to Crops/Properties (Descending order of Total)',
+             type='html')  %>% 
+  kable_styling(latex_options = 'hold_position',full_width=F,position='left') %>%
+  column_spec(2,bold=T)%>%
+  column_spec(5,bold=T)
 
 ```
+
+
+```{r plotEconomy, message=FALSE}
+
+top5economicDmg <- economicDmgSum$EVTYPE[1:5]
+
+PlotEconomy <- data %>%
+  select(c(YEAR,EVTYPE,totCropProp)) %>%
+  filter(EVTYPE %in% top5economicDmg) %>%
+  group_by(YEAR,EVTYPE) %>%
+  summarize(YEARLY=sum(totCropProp)/1e+6)
+  
+g <- ggplot(PlotEconomy,aes(x=YEAR,y=YEARLY,color=EVTYPE))
+g <- g + geom_point() 
+g + geom_line()
+
+```
+```{r economicDmgFindngs}
+
+flood <- filter(data, EVTYPE=='FLOOD')
+pctFlood2006 <- round(
+            sum(flood$totCropProp[flood$YEAR=='2006'])/sum(flood$totCropProp),2)*100
+library(reshape2)
+tmp <- dcast(PlotEconomy,YEAR ~ EVTYPE,value.var='YEARLY')
+colSums(is.na(tmp))
+rownames(tmp) <- tmp$YEAR
+tmp <- select(tmp, -c(1))
+tmp
+c <- round(cor(tmp, use = 'complete.obs'),2)
+c
+```
+
+The weather event that have the greatest economic consequences is FLOOD. From the Figure.1, Flood is not always has the greatest damage, this high figure is due to the 2006 record which is `r pctFlood2006`% of all the damages the Flood caused. 
+
+The HURRICANE (TYPHOON) and STORM SURGE/TIDE have almost same trend every year.  
+
+
+
+
+
 ## References  
 
 [How To Handle Exponent Value of PROPDMGEXP and CROPDMGEXP](https://rstudio-pubs-static.s3.amazonaws.com/58957_37b6723ee52b455990e149edde45e5b6.html)  
@@ -411,10 +452,7 @@ economicDmgSum <- data %>%
 1.The number of the unique events by years
 
 ```{r apdx1}
-# Count unique EVTYPE each year 
-grouped <- data %>%
-  mutate(EVTYPE=factor(EVTYPE),YEAR=factor(YEAR)) %>%
-  group_by(YEAR) 
+
 # This dataframe shows the number of the unique events each year
 countByYear <- summarize(grouped, 'NUMBER OF RECORDED EVENTS'=length(unique(EVTYPE)))
 kable(countByYear,type='html')
