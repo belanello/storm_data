@@ -103,14 +103,15 @@ Now, the most important task in this data preprocessing phase is to organize the
 Steps for Assigning incorrect EVTYPE to Official EVTYPE:  
 Change all values to upper cases.(It erase the difference between upper cases and lower cases.) >> Load the official event type categories, (It was copied from the documentation in PDF file.) and change them also in upper cases. >> List the event types which do not match with the official event types. >> check the pattern and use the grepl function to correct them together, if it was not sure which categories the values are pointing, read REMARKS and decide which events they possibly belong to.  
 
-```{r cleanUp1,results='asis',message=FALSE}
+```{r cleanUp1,results='asis',message=FALSE,cache=TRUE}
 
 # Change EVTYPE column to upper cases
 data$EVTYPE <- toupper(data$EVTYPE)
 
 # Load the official 48 EVTYPE
 library(kableExtra)
-events <- read.table('events.txt',sep = '\n')
+url2 <- 'https://raw.githubusercontent.com/belanello/storm_data/main/events.txt'
+events <- read.table(url2,sep = '\n')
 events <- toupper(events$V1)
 # display official event list
 kbl(matrix(events, nrow=16,dimnames =NULL), 
@@ -458,3 +459,7 @@ kable(economicDmgSum,type='html') %>%
 ```{r ref.label=knitr::all_labels(appendix==TRUE),echo=TRUE, eval=FALSE}
 
 ```
+
+  
+    
+    

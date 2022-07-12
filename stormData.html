@@ -268,7 +268,8 @@ data$EVTYPE &lt;- toupper(data$EVTYPE)
 
 # Load the official 48 EVTYPE
 library(kableExtra)
-events &lt;- read.table(&#39;events.txt&#39;,sep = &#39;\n&#39;)
+url2 &lt;- &#39;https://raw.githubusercontent.com/belanello/storm_data/main/events.txt&#39;
+events &lt;- read.table(url2,sep = &#39;\n&#39;)
 events &lt;- toupper(events$V1)
 # display official event list
 kbl(matrix(events, nrow=16,dimnames =NULL), 
