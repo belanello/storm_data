@@ -1,25 +1,24 @@
 ---
-title: "A Data Analysis of The Storm Data"
+title: "The Analysis of The NOAA Storm Data"
 author: "Ayako Nagao"
-date: "7/7/2022"
+date: "7/12/2022"
 output: html_document
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-## 1.Overview  
-In this report, we analyze the NOAA Storm Database to answer the questions about the damages that severe weather events caused across the United States. Namely,
+### 1.Synopsis  
+In this report, we analyze the NOAA Storm Database about the damages that severe weather events caused across the United States to answer below questions,
 
 1. Which types of severe weather events are most harmful with respect to population health?  
 2. Which types of severe weather events have the greatest economic consequences?  
 
-To answer these questions, We will find out which severe weather events are attributed to higher fatalities/injuries or larger damages to the crops/properties, so that readers can conduct further analyses and take appropriate prevention measures for those events.
+We will find out which severe weather events are attributed to higher fatalities/injuries or greater damages to the crops/properties, so that readers can conduct further analyses and take appropriate prevention measures for those events.
 
-## 2.Data Processing  
+### 2.Data Processing  
 
 In this section, we load the raw data, subset and alter some columns to make the data ready for analyses.  
-(*I set echo=TRUE for all the code for grading purpose. This section may be a little lengthy.)
 
 First, we load the data.
 
@@ -77,7 +76,6 @@ Next, in order to get the amount of damage to the crops and properties, we need 
 ``` {r exponentsHandling, message=FALSE}
 
 ## Difine exponent column handling function
-
 expFunc <- function(x){
   if ((x=='B') | (x=='b')) {x <- 1e+9
   }else if ((x=='M') | (x=='m')){x <- 1e+6
@@ -87,8 +85,7 @@ expFunc <- function(x){
   }else{x <- 1}
 }
 
-# Change alphabets to multiplier
-# for CROPDMGEXP
+# Change alphabets to multiplier for CROPDMGEXP
 data$CROPDMGEXP <- sapply(data$CROPDMGEXP,expFunc)
 
 # Make a new column for actual damage
@@ -101,44 +98,38 @@ data <- mutate(data, totPropDmg=PROPDMG*PROPDMGEXP)
 ```
 
 
-Now, the most important task in this data preprocessing phase is to organize the EVTYPE(event types) column. The number of official event types are 48. But if we count all unique values in this column, they are 488 at this point. It is due to the mistakes in spelling or being coded with own words. In order to compare all 48 event types, we have to assign incorrect event types to the official ones, meaning reduce 488 categories to 48. 
+Now, the most important task in this data preprocessing phase is to organize the EVTYPE(event types) column. The number of official event types are 48. But if we count all unique values in this column, they are 488 at this point. It is due to the mistakes in spelling or being coded with own words. In order to compare all 48 event types, we have to assign incorrect event types to the official ones.
 
-1. Change all values to upper cases.(It erase the difference between upper cases and lower cases.)
-```{r cleanUp1}
+Steps for Assigning incorrect EVTYPE to Official EVTYPE:  
+Change all values to upper cases.(It erase the difference between upper cases and lower cases.) >> Load the official event type categories, (It was copied from the documentation in PDF file.) and change them also in upper cases. >> List the event types which do not match with the official event types. >> check the pattern and use the grepl function to correct them together, if it was not sure which categories the values are pointing, read REMARKS and decide which events they possibly belong to.  
 
-before <- length(unique(data$EVTYPE))
+```{r cleanUp1,results='asis',message=FALSE}
+
+# Change EVTYPE column to upper cases
 data$EVTYPE <- toupper(data$EVTYPE)
-after <- length(unique(data$EVTYPE))
 
-```
-
-Now after changed them to all upper cases, unique EVTYPE values are reduced to `r after` from `r before`.  
-  
-2. Load the official event type categories, (It was copied from the documentation in PDF file.) and change them also in upper cases.  
-```{r cleanUp2,results='asis',message=FALSE}
-
+# Load the official 48 EVTYPE
 library(kableExtra)
 events <- read.table('events.txt',sep = '\n')
 events <- toupper(events$V1)
 # display official event list
-kbl(matrix(events, nrow=16,dimnames =NULL), caption='Official Event Types (Table.1)',
-             type='html')  %>% kable_styling(latex_options = 'hold_position',font_size=10)
+kbl(matrix(events, nrow=16,dimnames =NULL), 
+    caption='Table.1: Official Event Types',type='html')  %>%    kable_styling(latex_options = 'hold_position',font_size=10)
 
 ```
 
-3. List the event types which do not match with the official event types.
 
-```{r cleanUp3}
-
+```{r cleanUp2}
+# List the event types which do not match with the official event types
 notInListEvents <- unique(data[!(data$EVTYPE %in% events),'EVTYPE'])
 notInListEventsCounts <- length(notInListEvents)
 head(notInListEvents)
 ```
 In total, `r notInListEventsCounts` events are unlisted.  
 
-4. Then deal with them case by cases. For typos, check the pattern and use the grepl function to correct them together, if it was not sure which categories the values are pointing, read REMARKS and decide which events they possibly belong to.  
-Below code will assign the unlisted events to the official event lists.  
 ```{r cleanUp4,cache=TRUE}
+
+# Correct typos or change them to official expressions of events
 
 data$EVTYPE[grepl("^\\s*TSTM WIND",data$EVTYPE)] <- "THUNDERSTORM WIND"
 data$EVTYPE[grepl("^HURRICANE",data$EVTYPE)] <- "HURRICANE (TYPHOON)"  
@@ -293,35 +284,31 @@ of events but from 1950 to 1992, only 1 - 3 events were recorded each year.
 
 # Change BGN_DATE column to Date class
 library(lubridate)
-date <- gsub('/','-',data$BGN_DATE)
-date <- gsub(' 0:00:00','',date)
-# Make a new column for YEAR
+date <- gsub('/','-',data$BGN_DATE); date <- gsub(' 0:00:00','',date)
+
+# Change class of BGN_DATE and Make a new column for YEAR
 data <- mutate(data, BGN_DATE=mdy(date),YEAR=year(BGN_DATE))
 
 before <- dim(data)[1]
-# Count unique EVTYPE each year (This code needed for appendix1)
-grouped <- data %>%
-  mutate(EVTYPE=factor(EVTYPE),YEAR=factor(YEAR)) %>%
-  group_by(YEAR) 
 # filter the data only after 1993
 data <- filter(data, YEAR >= '1993')
 after <- dim(data)[1]
-
 ```
 
 Now data has only records from 1993 to 2011. The number of records reduced to `r after` from `r before` .  
 
-And lastly, make total columns of damages to make an analysis easier.  
+And lastly, make new columns of the sum of the damages to make an analysis easier.  
 ```{r newColumn}
-# make new columns for total of health/economic damages
 data <- mutate(data, 
-               totFatInj=FATALITIES+INJURIES,totCropProp=totPropDmg+totCropDmg)
-
+               totFatInj=FATALITIES+INJURIES,
+               totCropProp=totPropDmg+totCropDmg)
 ```
 
 
-## 3.Results
-Table.2 is a list of top 5 weather events which caused the highest fatalities and injuries on US citizens from 1993 to 2011. (see full list for appendix 2).  
+### 3.Results  
+#### 3.1 The weather events that are most harmful with respect to population health  
+
+Table.2 is a list of top 5 weather events which caused the highest fatalities and injuries from 1993 to 2011. (see full list for appendix 1).  
 
 ```{r result1,message=FALSE}
 
@@ -331,7 +318,7 @@ healthDmgSum <- data %>%
   arrange(desc(Total)) 
 
 Rank <- 1:5
-kbl(cbind(Rank,healthDmgSum[1:5,]), caption='Top 5 events Recorded Highest  Fatalities/Injurie(Descending order of Total) Table.2',
+kbl(cbind(Rank,healthDmgSum[1:5,]), caption='Table.2: Top 5 Events Recorded Highest Fatalities/Injuries (Descending order of Total)',
              type='html')  %>% 
   kable_styling(latex_options = 'hold_position',full_width=F,position='left') %>%
   column_spec(2,bold=T)%>%
@@ -339,61 +326,73 @@ kbl(cbind(Rank,healthDmgSum[1:5,]), caption='Top 5 events Recorded Highest  Fata
 
 ```
 
-We grouped the data by year and events, and plotted the total number of fatalities and injuries in Figure.1. 
+Figure.1. is the graph of total fatalities/injuries by year for each top 5 weather events.
 
-```{r plotHeath, message=FALSE}
+```{r plotHeath, message=FALSE, fig.width=8,fig.height=3}
 library(ggplot2)
 top5healthDmg <- healthDmgSum$EVTYPE[1:5]
 
 PlotHealth <- data %>%
-  select(c(YEAR,EVTYPE,FATALITIES,INJURIES)) %>%
+  select(c(YEAR,EVTYPE,totFatInj)) %>%
   filter(EVTYPE %in% top5healthDmg) %>%
-  mutate(TOTAL=FATALITIES+INJURIES) %>%
   group_by(YEAR,EVTYPE) %>%
-  summarize(YEARLY=sum(TOTAL))
+  summarize(YEARLY=sum(totFatInj))
   
 g <- ggplot(PlotHealth,aes(x=YEAR,y=YEARLY,color=EVTYPE))
-g <- g + geom_point() 
-g + geom_line()
-
+g <- g + geom_point() + geom_line()
+g <- g + labs(title='Figure.1: Fatalities and Injuries by Year (1993-2011)',
+          y='Total Fatalities/Injuries')
+g
 ```
 
-### Findings for severe weather events wchich are most harmful to population health
 
-```{r parcentageTornado}
+
+```{r findingsHealth, appendix=TRUE, echo=FALSE}
+
+# SECTION 3-1 OBSERVATION OF THE FATALITIES AND INJURIES
 # Calculate 2011 tornado percentage in total fatalities/injuries
 data2011 <- data %>%
   filter(YEAR=='2011') %>%
-  mutate(total=FATALITIES + INJURIES) %>%
   group_by(EVTYPE) %>%
-  summarize(S=sum(total))
+  summarize(S=sum(totFatInj))
 
 pctTornado <- round(data2011$S[data2011$EVTYPE=='TORNADO'] / sum(data2011$S),2) * 100
-
+# Calculate flood percentage of 1998 
 flood1998 <- filter(data, EVTYPE=='FLOOD' & YEAR=='1998') 
 flood <- filter(data,EVTYPE=='FLOOD') 
 
 pct1998 <- round(sum(flood1998$totFatInj) / sum(flood$totFatInj),2)*100
 
 ```
- 
-* TORNADO has the highest figure of fatalities and injuries in the records. From 1993, mostly keep the highest place, and 2011 was the one of the worst year, `r pctTornado`% of the total fatalities/injuries in this year were caused by TORNADO.  
 
-* The EXCESSIVE HEAT has the highest fatalities among all the events. 
+- TORNADO has the highest figure in the records, especially in 2011, `r pctTornado`% of the total fatalities/injuries in this year were caused by TORNADO.  
 
-*  The number of the fatalities/injuries by FLOOD were relatively low except 1998. The figure in this year occupies nearly `r pct1998`% of the total fatalities/injuries in the record.  
+- The EXCESSIVE HEAT has the highest fatalities among all the events.  
 
-* THUNDERSTORM WIND and LIGHTNING have similar trend through the record.
+- The number of the fatalities/injuries by FLOOD were relatively low except 1998. The figure in this year was nearly `r pct1998`% of all the fatalities/injuries caused by Flood in the record, which means the this high figure is due to the record of this single year.  
 
+  
+  
+#### 3.2 The weather events having the greatest economic consequences  
+  
+Table.3 is a list of top 5 weather events which caused the greatest damages to crops and properties from 1993 to 2011. (see full list for appendix 2)
+  
 
-```{r economyResult}
+```{r economyResult,message=FALSE}
+library(scales)
+dollarFormat <- function(x) dollar(x)
 economicDmgSum <- data %>%
   group_by(EVTYPE) %>%
-  summarize(cropSum=sum(totCropDmg),propSum=sum(totPropDmg),Total=sum(totCropProp)) %>%
-  arrange(desc(Total))
+  summarize('Crop Damage'=sum(totCropDmg),
+            'Property Damage'=sum(totPropDmg),
+            Total=sum(totCropProp)) %>%
+  arrange(desc(Total)) %>%
+  mutate_if(is.numeric,dollarFormat)
 
 Rank <- 1:5
-kbl(cbind(Rank,economicDmgSum[1:5,]), caption='Table.3 Top 5 events Recorded Highest Damages to Crops/Properties (Descending order of Total)',
+kbl(cbind(Rank,economicDmgSum[1:5,]),
+    align=c('c','l','r','r','r'),
+    caption='Table.3: Top 5 Events Recorded Highest Damages to Crops/Properties (Descending order of Total)',
              type='html')  %>% 
   kable_styling(latex_options = 'hold_position',full_width=F,position='left') %>%
   column_spec(2,bold=T)%>%
@@ -401,8 +400,9 @@ kbl(cbind(Rank,economicDmgSum[1:5,]), caption='Table.3 Top 5 events Recorded Hig
 
 ```
 
+Figure.2 is the graph of total damages to crops/properties by year for each top 5 weather events.  
 
-```{r plotEconomy, message=FALSE}
+```{r plotEconomy, fig.width=8,fig.height=4,message=FALSE}
 
 top5economicDmg <- economicDmgSum$EVTYPE[1:5]
 
@@ -413,28 +413,15 @@ PlotEconomy <- data %>%
   summarize(YEARLY=sum(totCropProp)/1e+6)
   
 g <- ggplot(PlotEconomy,aes(x=YEAR,y=YEARLY,color=EVTYPE))
-g <- g + geom_point() 
-g + geom_line()
-
-```
-```{r economicDmgFindngs}
-
-flood <- filter(data, EVTYPE=='FLOOD')
-pctFlood2006 <- round(
-            sum(flood$totCropProp[flood$YEAR=='2006'])/sum(flood$totCropProp),2)*100
-library(reshape2)
-tmp <- dcast(PlotEconomy,YEAR ~ EVTYPE,value.var='YEARLY')
-colSums(is.na(tmp))
-rownames(tmp) <- tmp$YEAR
-tmp <- select(tmp, -c(1))
-tmp
-c <- round(cor(tmp, use = 'complete.obs'),2)
-c
+g <- g + geom_point() + geom_line()
+g <- g + labs(title='Figure.2: Crops and Properties Damages by Year (1993-2011)',
+          y='Total Damages to Crops/Properties (in Million US dollars)')
+g
 ```
 
-The weather event that have the greatest economic consequences is FLOOD. From the Figure.1, Flood is not always has the greatest damage, this high figure is due to the 2006 record which is `r pctFlood2006`% of all the damages the Flood caused. 
-
-The HURRICANE (TYPHOON) and STORM SURGE/TIDE have almost same trend every year.  
+  
+  
+As we can see in Figure.2, most of the economic damages to crops and properties have been caused by three events, FLOOD, HURRICANE (TYPHOON) and STORM SURGE/TIDE between 2004 and 2006.
 
 
 
@@ -444,35 +431,30 @@ The HURRICANE (TYPHOON) and STORM SURGE/TIDE have almost same trend every year.
 
 [How To Handle Exponent Value of PROPDMGEXP and CROPDMGEXP](https://rstudio-pubs-static.s3.amazonaws.com/58957_37b6723ee52b455990e149edde45e5b6.html)  
 
-[United States Census Bureau]('https://www.census.gov/library/reference/code-lists/ansi.html')
+[Storm Data Documentation]('https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf')
 
 
 ## Appendix  
 
-1.The number of the unique events by years
-
-```{r apdx1}
-
-# This dataframe shows the number of the unique events each year
-countByYear <- summarize(grouped, 'NUMBER OF RECORDED EVENTS'=length(unique(EVTYPE)))
-kable(countByYear,type='html')
-```
-  
-  
-2.The Full list of total Fatalities/Injuries for each event.  
+1.The Full list of total Fatalities/Injuries for each event.  
 
 ```{r apdx2}
 
-kable(healthDmgSum,type='html')
+kable(healthDmgSum,type='html') %>% 
+  kable_styling(font_size=10,full_width=F,position='left')
 
 ```
   
   
-3.The full list of total damages to the crops/properties for each event.
+2.The full list of total damages to the crops/properties for each event.
 ```{r apdx3}
 
-kable(economicDmgSum,type='html')
+kable(economicDmgSum,type='html') %>% 
+  kable_styling(font_size=10,full_width=F,position='left')
 
 ```
 
+3.Code used in 3.1 for observation.
+```{r ref.label=knitr::all_labels(appendix==TRUE),echo=TRUE, eval=FALSE}
 
+```
