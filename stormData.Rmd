@@ -322,7 +322,7 @@ Rank <- 1:5
 kbl(cbind(Rank,healthDmgSum[1:5,]), caption='Table.2: Top 5 Events Recorded Highest Fatalities/Injuries (Descending order of Total)',
              type='html')  %>% 
   kable_styling(latex_options = 'hold_position',full_width=F,position='left') %>%
-  column_spec(2,bold=T)%>%
+  column_spec(2,bold=T) %>%
   column_spec(5,bold=T)
 
 ```
@@ -367,11 +367,9 @@ pct1998 <- round(sum(flood1998$totFatInj) / sum(flood$totFatInj),2)*100
 ```
 
 - TORNADO has the highest figure in the records, especially in 2011, `r pctTornado`% of the total fatalities/injuries in this year were caused by TORNADO.  
-
 - The EXCESSIVE HEAT has the highest fatalities among all the events.  
-
-- The number of the fatalities/injuries by FLOOD were relatively low except 1998. The figure in this year was nearly `r pct1998`% of all the fatalities/injuries caused by Flood in the record, which means the this high figure is due to the record of this single year.  
-
+- The number of the fatalities/injuries by FLOOD were relatively low except 1998. The figure in this year was nearly `r pct1998`% of all the fatalities/injuries caused by Flood in the record, which means this high figure is due to the record of this single year.  
+  
   
   
 #### 3.2 The weather events having the greatest economic consequences  
@@ -428,14 +426,14 @@ As we can see in Figure.2, most of the economic damages to crops and properties 
 
 
 
-## References  
+### References  
 
 [How To Handle Exponent Value of PROPDMGEXP and CROPDMGEXP](https://rstudio-pubs-static.s3.amazonaws.com/58957_37b6723ee52b455990e149edde45e5b6.html)  
 
 [Storm Data Documentation]('https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf')
 
 
-## Appendix  
+### Appendix  
 
 1.The Full list of total Fatalities/Injuries for each event.  
 

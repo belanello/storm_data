@@ -645,7 +645,7 @@ Rank &lt;- 1:5
 kbl(cbind(Rank,healthDmgSum[1:5,]), caption=&#39;Table.2: Top 5 Events Recorded Highest Fatalities/Injuries (Descending order of Total)&#39;,
              type=&#39;html&#39;)  %&gt;% 
   kable_styling(latex_options = &#39;hold_position&#39;,full_width=F,position=&#39;left&#39;) %&gt;%
-  column_spec(2,bold=T)%&gt;%
+  column_spec(2,bold=T) %&gt;%
   column_spec(5,bold=T)</code></pre>
 <table class="table" style="width: auto !important; ">
 <caption>
@@ -930,13 +930,13 @@ g</code></pre>
 <p>As we can see in Figure.2, most of the economic damages to crops and properties have been caused by three events, FLOOD, HURRICANE (TYPHOON) and STORM SURGE/TIDE between 2004 and 2006.</p>
 </div>
 </div>
-<div id="references" class="section level2">
-<h2>References</h2>
+<div id="references" class="section level3">
+<h3>References</h3>
 <p><a href="https://rstudio-pubs-static.s3.amazonaws.com/58957_37b6723ee52b455990e149edde45e5b6.html">How To Handle Exponent Value of PROPDMGEXP and CROPDMGEXP</a></p>
 <p><a href="&#39;https://d396qusza40orc.cloudfront.net/repdata%2Fpeer2_doc%2Fpd01016005curr.pdf&#39;">Storm Data Documentation</a></p>
 </div>
-<div id="appendix" class="section level2">
-<h2>Appendix</h2>
+<div id="appendix" class="section level3">
+<h3>Appendix</h3>
 <p>1.The Full list of total Fatalities/Injuries for each event.</p>
 <pre class="r"><code>kable(healthDmgSum,type=&#39;html&#39;) %&gt;% 
   kable_styling(font_size=10,full_width=F,position=&#39;left&#39;)</code></pre>
